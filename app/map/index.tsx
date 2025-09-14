@@ -84,7 +84,7 @@ export default function MapHomeScreen() {
           <Text className="ml-2 text-gray-500 text-base">Where to?</Text>
         </TouchableOpacity>
 
-        {/* Promo row 
+        {/* Promo rowee 
         <View className="flex-row items-center bg-gray-50 rounded-xl mt-4 p-3">
           <Image
             source={{ uri: fakePhoto }}
