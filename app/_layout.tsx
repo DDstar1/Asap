@@ -30,6 +30,7 @@ export default function RootLayout() {
           name="onboarding/index"
           options={{ headerShown: false }}
         />
+        <Stack.Screen name="map/index" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />

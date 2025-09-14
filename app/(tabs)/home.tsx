@@ -1,6 +1,8 @@
 import { IMAGES } from "@/assets/assetsData";
+import CameraModal from "@/components/CameraModal"; // ⬅️ import the modal
 import { Feather, Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -13,6 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ShippingTrackerApp = () => {
+  const [cameraVisible, setCameraVisible] = useState(false);
+
   const shipments = [
     {
       id: "FNL1345603",
@@ -116,7 +120,13 @@ const ShippingTrackerApp = () => {
         {/* Quick Actions */}
         <View className="flex-row justify-around px-4 py-4 mb-4">
           {quickActions.map((action, index) => (
-            <TouchableOpacity key={index} className="items-center">
+            <TouchableOpacity
+              key={index}
+              className="items-center"
+              onPress={() => {
+                if (action.label === "Send") setCameraVisible(true);
+              }}
+            >
               <View className="w-16 h-16 rounded-full bg-[#3C3C43] justify-center items-center mb-2">
                 <Ionicons name={action.icon} size={24} color="white" />
               </View>
@@ -168,9 +178,22 @@ const ShippingTrackerApp = () => {
             ))}
           </View>
         </View>
-
-        {/* Bottom spacing for navigation */}
       </ScrollView>
+
+      {/* Camera Modal */}
+      <CameraModal
+        visible={cameraVisible}
+        onClose={() => setCameraVisible(false)}
+        onConfirm={(uri: any) => {
+          console.log("Package photo URI:", uri);
+          // TODO: send uri to backend / state
+          // Navigate straight to MapScreen with the photoUri
+          router.push({
+            pathname: "/map",
+            params: { photoUri: uri },
+          });
+        }}
+      />
     </SafeAreaView>
   );
 };
