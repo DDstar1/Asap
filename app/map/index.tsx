@@ -411,7 +411,7 @@ function DestinationSearchBox({
 
       {/* Book Ride Button - Show when both locations are selected */}
       {selectedFromLocation && selectedToLocation && (
-        <TouchableOpacity className="mt-4 bg-green-600 rounded-lg h-12 items-center justify-center">
+        <TouchableOpacity className="k mt-4 bg-green-600 rounded-lg h-12 items-center justify-center">
           <Text className="text-white font-semibold text-base">Book Ride</Text>
         </TouchableOpacity>
       )}
