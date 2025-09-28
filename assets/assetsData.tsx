@@ -4,6 +4,7 @@ export const IMAGES = {
   riderBikePizza: require("./images/rider_bike_pizza.jpg"),
   riderManTransit: require("./images/rider_man_transit.jpg"),
   riderWithPizza: require("./images/rider_with_pizza.jpg"),
+  map_rider: require("./images/map_rider.png"),
   profile_img: require("./images/profile.png"),
   wallet: require("./images/wallet.png"),
   dummy_map: require("./images/dummy_map.png"),
