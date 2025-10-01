@@ -1,4 +1,5 @@
 import { AnimatedRegion } from "react-native-maps";
+import { RIDERS } from "./dummyData";
 
 // Calculate bearing between two coordinates
 export const getBearing = (
@@ -21,18 +22,18 @@ export const getBearing = (
 };
 
 // Generate fake riders
-export const generateRiders = (baseLocation: {
+export const generateRidersWithCoords = (baseLocation: {
   latitude: number;
   longitude: number;
 }) => {
-  return Array.from({ length: 5 }).map((_, idx) => {
-    const offsetLat = (Math.random() - 0.5) * 0.02;
+  return RIDERS.map((rider) => {
+    const offsetLat = (Math.random() - 0.5) * 0.02; // ±0.01 ~ about 1km
     const offsetLng = (Math.random() - 0.5) * 0.02;
     const lat = baseLocation.latitude + offsetLat;
     const lng = baseLocation.longitude + offsetLng;
 
     return {
-      id: idx,
+      ...rider,
       coordinate: new AnimatedRegion({
         latitude: lat,
         longitude: lng,
@@ -49,8 +50,8 @@ export const generateRiders = (baseLocation: {
 export const moveRiders = (riders: any[], getBearingFn = getBearing) => {
   return riders.map((rider) => {
     const current = rider.coordinate.__getValue();
-    const moveLat = (Math.random() - 0.5) * 0.001;
-    const moveLng = (Math.random() - 0.5) * 0.001;
+    const moveLat = (Math.random() - 0.5) * 0.02;
+    const moveLng = (Math.random() - 0.5) * 0.02;
     const newPos = {
       latitude: current.latitude + moveLat,
       longitude: current.longitude + moveLng,
@@ -63,7 +64,7 @@ export const moveRiders = (riders: any[], getBearingFn = getBearing) => {
     rider.coordinate
       .timing({
         ...newPos,
-        duration: 2000,
+        duration: 1500,
         useNativeDriver: false,
       })
       .start();
@@ -79,3 +80,79 @@ export const calculateFare = async () => {
   const fare = 500 + distanceKm * 100;
   return Math.round(fare);
 };
+
+type Location = { latitude: number; longitude: number };
+
+function getDistanceKm(loc1: Location, loc2: Location) {
+  const R = 6371; // km radius of Earth
+  const dLat = ((loc2.latitude - loc1.latitude) * Math.PI) / 180;
+  const dLon = ((loc2.longitude - loc1.longitude) * Math.PI) / 180;
+  const lat1 = (loc1.latitude * Math.PI) / 180;
+  const lat2 = (loc2.latitude * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // distance in km
+}
+
+/**
+ * Get rider's current live position
+ */
+function getRiderPosition(rider: any): Location {
+  if (rider.coordinate && rider.coordinate.__getValue) {
+    return rider.coordinate.__getValue(); // live animated position
+  }
+  return rider.lastPosition; // fallback
+}
+
+/**
+ * Assign nearest rider to a given location
+ * @param userLocation user lat/lng
+ * @param riders list of riders with AnimatedRegion coordinates
+ * @returns nearest rider object with live distance
+ */
+export function assignNearestRider(userLocation: any, riders: any[]) {
+  if (!riders || riders.length === 0) {
+    return null;
+  }
+
+  // Ensure userLocation is normalized
+  const userPos = {
+    latitude: userLocation.latitude ?? userLocation.coordinates?.latitude,
+    longitude: userLocation.longitude ?? userLocation.coordinates?.longitude,
+  };
+
+  if (!userPos.latitude || !userPos.longitude) {
+    return null;
+  }
+
+  let nearest: any = null;
+  let minDist = Infinity;
+
+  for (const rider of riders) {
+    const pos = getRiderPosition(rider);
+
+    if (!pos?.latitude || !pos?.longitude) {
+      continue;
+    }
+
+    const dist = getDistanceKm(userPos, pos);
+
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = rider;
+    }
+  }
+
+  if (!nearest) {
+    return null;
+  }
+
+  return {
+    ...nearest,
+    distanceKm: Number(minDist.toFixed(2)),
+  };
+}

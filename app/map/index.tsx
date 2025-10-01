@@ -2,9 +2,13 @@
 import { IMAGES } from "@/assets/assetsData";
 import DestinationSearchModal from "@/components/DestinationSearchModal";
 import RiderSearchModal from "@/components/RiderSearchModal";
-import { calculateFare, generateRiders, moveRiders } from "@/utils/mapUtils";
+import {
+  calculateFare,
+  generateRidersWithCoords,
+  moveRiders,
+} from "@/utils/mapUtils";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MotiView } from "moti";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -18,8 +22,6 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MapScreen() {
-  const { photoUri } = useLocalSearchParams();
-
   const [pickup, setPickup] = useState<any>(null);
   const [destination, setDestination] = useState<any>(null);
   const [activeField, setActiveField] = useState<"from" | "to" | null>(null);
@@ -27,8 +29,39 @@ export default function MapScreen() {
   const [price, setPrice] = useState<number | null>(null);
   const [riders, setRiders] = useState<any[]>([]);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [packageImage, setPackageImage] = useState<any>(null);
 
   const mapRef = useRef<MapView>(null);
+
+  // Load package image from AsyncStorage
+  useEffect(() => {
+    loadPackageImage();
+  }, []);
+
+  const loadPackageImage = async () => {
+    try {
+      const uri = await AsyncStorage.getItem("packageImage");
+      if (uri) {
+        setPackageImage({ uri });
+        console.log("✅ Package image loaded from AsyncStorage");
+      } else {
+        console.log("ℹ️ No package image found in AsyncStorage");
+      }
+    } catch (error) {
+      console.error("Error loading package image:", error);
+    }
+  };
+
+  // Clear package image from AsyncStorage
+  const clearPackageImage = async () => {
+    try {
+      await AsyncStorage.removeItem("packageImage");
+      setPackageImage(null);
+      console.log("🗑️ Package image cleared from AsyncStorage");
+    } catch (error) {
+      console.error("Error clearing package image:", error);
+    }
+  };
 
   // Generate riders when pickup changes
   useEffect(() => {
@@ -36,7 +69,7 @@ export default function MapScreen() {
       latitude: 6.5244,
       longitude: 3.3792,
     };
-    const generated = generateRiders(baseLocation);
+    const generated = generateRidersWithCoords(baseLocation);
     setRiders(generated);
   }, [pickup]);
 
@@ -44,7 +77,7 @@ export default function MapScreen() {
   useEffect(() => {
     const interval = setInterval(() => {
       setRiders((prev) => moveRiders(prev));
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -108,6 +141,8 @@ export default function MapScreen() {
             key={rider.id}
             coordinate={rider.coordinate}
             anchor={{ x: 0.5, y: 0.5 }}
+            title={rider.name} // 👈 built-in tooltip
+            description={`⭐ ${rider.rating} • ${rider.deliveries}`} // optional
           >
             <Image
               source={IMAGES.map_rider}
@@ -127,23 +162,7 @@ export default function MapScreen() {
             title="Pickup"
             description={pickup.name}
             pinColor="green"
-          >
-            {/* {showSearchModal && (
-              <>
-                <MotiView
-                  from={{ scale: 0.5, opacity: 0.5 }}
-                  animate={{ scale: 2, opacity: 0 }}
-                  transition={{
-                    loop: true,
-                    type: "timing",
-                    duration: 1000,
-                  }}
-                  className="w-10 h-10 rounded-full bg-orange-400"
-                />
-                <View className="w-4 h-4 rounded-full bg-orange-500" />
-              </>
-            )} */}
-          </Marker>
+          />
         )}
         {destination && (
           <Marker
@@ -234,9 +253,15 @@ export default function MapScreen() {
 
       <RiderSearchModal
         visible={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
+        onClose={() => {
+          setShowSearchModal(false);
+          // Optional: Clear image after delivery is complete
+          // clearPackageImage();
+        }}
         price={price}
-        packageImage={photoUri ? { uri: photoUri } : IMAGES.riderWithPizza}
+        packageImage={packageImage || IMAGES.riderWithPizza}
+        pickup={pickup}
+        riders={riders}
       />
     </View>
   );

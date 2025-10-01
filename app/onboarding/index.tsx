@@ -57,7 +57,7 @@ export default function Onboarding() {
     if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      router.replace("/home"); // Go to main tabs after onboarding
+      router.replace("/activity"); // Go to main tabs after onboarding
     }
   };
 

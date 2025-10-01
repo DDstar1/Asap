@@ -1,9 +1,11 @@
 import { IMAGES } from "@/assets/assetsData";
 import CameraModal from "@/components/CameraModal"; // ⬅️ import the modal
 import { Feather, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   Image,
   ScrollView,
   StatusBar,
@@ -184,14 +186,16 @@ const ShippingTrackerApp = () => {
       <CameraModal
         visible={cameraVisible}
         onClose={() => setCameraVisible(false)}
-        onConfirm={(uri: any) => {
-          console.log("Package photo URI:", uri);
-          // TODO: send uri to backend / state
-          // Navigate straight to MapScreen with the photoUri
-          router.push({
-            pathname: "/map",
-            params: { photoUri: uri },
-          });
+        onConfirm={async (uri: any) => {
+          console.log("Package photo URI has being saved");
+          try {
+            await AsyncStorage.setItem("packageImage", uri);
+            console.log("✅ Image saved to AsyncStorage");
+            router.push("/map");
+          } catch (error) {
+            console.error("Error saving image:", error);
+            Alert.alert("Error", "Failed to save image");
+          }
         }}
       />
     </SafeAreaView>
